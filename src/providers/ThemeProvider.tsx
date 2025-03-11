@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { type ThemeContextValue, type ThemeLiteral } from "../../types/types";
 
-// Default values prevent unnecessary null checks when consuming context
 const defaultThemeContext: ThemeContextValue = {
   theme: "light",
   setTheme: () => {},
@@ -12,40 +11,56 @@ const defaultThemeContext: ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue>(defaultThemeContext);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeLiteral>("light");
+  const [theme, setTheme] = useState<ThemeLiteral | null>(null);
 
   useEffect(() => {
-    const loadTheme = () => {
-      try {
-        const storedTheme = localStorage.getItem("theme");
-        return isValidTheme(storedTheme) ? storedTheme : "light";
-      } catch (error) {
-        console.warn("Could not access localStorage:", error);
-        return "light";
-      }
-    };
+    try {
+      const storedTheme = localStorage.getItem("theme");
+      const validTheme: ThemeLiteral = isValidTheme(storedTheme)
+        ? storedTheme
+        : "light";
 
-    setTheme(loadTheme());
+      setTheme(validTheme);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error getting theme from localStorage:", error.message);
+      } else {
+        console.error("Error getting theme from localStorage:", error);
+      }
+      setTheme("light");
+    }
   }, []);
 
   useEffect(() => {
-    const root = document.documentElement;
-    const isDark = theme === "dark";
+    if (theme) {
+      const root = document.documentElement;
+      const isDark = theme === "dark";
 
-    root.classList.toggle("dark", isDark); // second argument if isDark is true then add the class dark to the root element
-    root.classList.toggle("light", !isDark); // second argument if isDark is false then add the class light to the root element
+      root.classList.toggle("dark", isDark);
+      root.classList.toggle("light", !isDark);
+    }
   }, [theme]);
 
   const toggleTheme = () => {
+    if (!theme) return;
+
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
 
     try {
       localStorage.setItem("theme", newTheme);
-    } catch (error) {
-      console.warn("Could not save theme to localStorage:", error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error setting theme in localStorage:", error.message);
+      } else {
+        console.error("Error setting theme in localStorage:", error);
+      }
     }
   };
+
+  if (theme === null) {
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
@@ -62,7 +77,6 @@ export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
 
   if (process.env.NODE_ENV !== "production") {
-    // Only throw in development for better debugging
     if (context === defaultThemeContext) {
       throw new Error("useTheme must be used within a ThemeProvider");
     }
