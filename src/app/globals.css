@@ -82,8 +82,8 @@
   --accent-foreground: oklch(20% 0.1 220);
   --destructive: oklch(60% 0.3 10);
   --destructive-foreground: oklch(98% 0.02 210);
-  --border: oklch(90% 0.05 220);
-  --input: oklch(90% 0.05 220);
+  --border: oklch(60% 0.2 290 / 0.2);
+  --input: oklch(60% 0.2 290 / 0.2);
   --ring: oklch(60% 0.2 290);
   --radius: 0.5rem;
   --chart-1: oklch(70% 0.3 20);
@@ -110,8 +110,8 @@
   --accent-foreground: oklch(98% 0.02 210);
   --destructive: oklch(40% 0.3 10);
   --destructive-foreground: oklch(98% 0.02 210);
-  --border: oklch(30% 0.1 220);
-  --input: oklch(30% 0.1 220);
+  --border: oklch(60% 0.2 290 / 0.2);
+  --input: oklch(60% 0.2 290 / 0.2);
   --ring: oklch(55% 0.25 280);
   --chart-1: oklch(60% 0.3 220);
   --chart-2: oklch(50% 0.3 160);
@@ -129,6 +129,6 @@
     @apply bg-background text-foreground;
   }
   body[data-scroll-locked='1'] {
-    @apply !p-6;
+    @apply !px-6;
   }
 }
