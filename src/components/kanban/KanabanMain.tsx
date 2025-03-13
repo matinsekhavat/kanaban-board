@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ChevronDownIcon, Sparkles as SparklesIcon } from 'lucide-react';
 import { DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 import { useUpdateSearchParam } from '@/hooks/use-searchParams';
 import { SORT_CONSTANTS } from '@/lib/constants';
 import { SortOption } from '@/types/types';
+import { cn } from '@/lib/utils';
 
 const findSortOption = (value: string): SortOption => {
   return (
@@ -26,6 +27,20 @@ function KanbanMain() {
   const [sortBy, setSortBy] = useState(() => getSearchParam('sort') || DEFAULT_SORT);
   const { label } = findSortOption(sortBy);
 
+  const handleSortOptionClick = useCallback(
+    (option: SortOption, e: React.MouseEvent) => {
+      const value = option.value;
+      if (value === sortBy) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      setSortBy(value);
+      updateSearchParam('sort', value);
+    },
+    [sortBy, setSortBy, updateSearchParam]
+  );
+
   return (
     // flex-1
     <div className="my-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_350px]">
@@ -42,26 +57,39 @@ function KanbanMain() {
             {/* HEADER > RIGHT */}
             <div className="flex items-center gap-2">
               <span className="text-sm">Sort by</span>
-              <DropdownMenu open={isSortDropdownOpen} onOpenChange={setIsSortDropdownOpen}>
+              <DropdownMenu
+                open={isSortDropdownOpen}
+                onOpenChange={(open) => setIsSortDropdownOpen(open)}
+              >
                 <DropdownMenuTrigger
                   asChild
                   className="min-w-[100px] justify-between focus-visible:ring-0"
                 >
                   <Button size={'sm'}>
                     {label}
-                    <ChevronDownIcon className="size-4" />
+                    <ChevronDownIcon
+                      className={cn(
+                        'ml-1 size-4 transition-transform duration-200',
+                        isSortDropdownOpen ? 'rotate-180' : 'rotate-0'
+                      )}
+                    />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={4}
+                  className="animate-in slide-in-from-top-2 w-[140px] p-1 duration-150"
+                >
                   {OPTIONS.map((option) => (
                     <DropdownMenuItem
                       key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        updateSearchParam('sort', option.value);
-                      }}
+                      onClick={(e) => handleSortOptionClick(option, e)}
+                      className={cn('my-1 text-xs transition-colors duration-150 sm:text-sm', {
+                        'bg-primary text-primary-foreground cursor-not-allowed':
+                          option.value === sortBy,
+                      })}
                     >
-                      <span className="text-xs sm:text-sm">{option.label}</span>
+                      {option.label}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
