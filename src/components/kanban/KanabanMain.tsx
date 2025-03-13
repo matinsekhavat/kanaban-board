@@ -28,7 +28,7 @@ function KanbanMain() {
 
   return (
     // flex-1
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_350px]">
+    <div className="my-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_350px]">
       {/* left */}
       <div className="order-2 md:order-1">
         {/* HEADER */}
@@ -36,18 +36,18 @@ function KanbanMain() {
           <CardHeader className="flex flex-row items-center justify-between">
             {/* HEADER > LEFT */}
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold">Projects</span>
+              <span className="text-lg font-bold sm:text-2xl">Projects</span>
               <SparklesIcon className="size-4 text-yellow-500" />
             </div>
             {/* HEADER > RIGHT */}
             <div className="flex items-center gap-2">
-              <span>Sort by</span>
+              <span className="text-sm">Sort by</span>
               <DropdownMenu open={isSortDropdownOpen} onOpenChange={setIsSortDropdownOpen}>
                 <DropdownMenuTrigger
                   asChild
                   className="min-w-[100px] justify-between focus-visible:ring-0"
                 >
-                  <Button>
+                  <Button size={'sm'}>
                     {label}
                     <ChevronDownIcon className="size-4" />
                   </Button>
@@ -61,7 +61,7 @@ function KanbanMain() {
                         updateSearchParam('sort', option.value);
                       }}
                     >
-                      <span>{option.label}</span>
+                      <span className="text-xs sm:text-sm">{option.label}</span>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
