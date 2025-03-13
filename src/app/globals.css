@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
 
@@ -122,9 +122,13 @@
 
 @layer base {
   * {
+    scrollbar-width: none;
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  body[data-scroll-locked='1'] {
+    @apply !p-6;
   }
 }
