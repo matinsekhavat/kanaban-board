@@ -13,7 +13,7 @@ function KanbanHeader() {
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState<boolean>(false);
 
   return (
-    <div className="flex items-center justify-between gap-6">
+    <header className="flex min-h-16 items-center justify-between gap-6 py-2">
       {/* LEFT SIDE */}
       <div className="flex items-center gap-8 sm:gap-12">
         <div className="flex shrink-0 items-center gap-2">
@@ -125,7 +125,7 @@ function KanbanHeader() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </header>
   );
 }
 
