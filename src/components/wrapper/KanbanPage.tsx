@@ -1,13 +1,15 @@
-import React from "react";
-import KanbanHeader from "@/components/kanban/KanbanHeader";
+import React from 'react';
+import KanbanHeader from '@/components/kanban/KanbanHeader';
+import KanbanMain from '../kanban/KanabanMain';
 
 function KanbanPage() {
   return (
-    <div>
+    <>
       {/* HEADER */}
       <KanbanHeader />
       {/* MAIN CONTENT */}
-    </div>
+      <KanbanMain />
+    </>
   );
 }
 
