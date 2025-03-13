@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
 
@@ -126,5 +126,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  body[data-scroll-locked='1'] {
+    @apply !p-6;
   }
 }
