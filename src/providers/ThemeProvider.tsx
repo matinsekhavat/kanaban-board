@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
-import { type ThemeContextValue, type ThemeLiteral } from "../../types/types";
+import { type ThemeContextValue, type ThemeLiteral } from "../types/types";
 
 const defaultThemeContext: ThemeContextValue = {
   theme: "light",
