@@ -1,4 +1,4 @@
-import { SortOption } from '@/types/types';
+import { SortOption, PriorityLevel, PirorityStatus } from '@/types/types';
 
 export const SORT_CONSTANTS = {
   DEFAULT_SORT: 'name-asc',
@@ -9,3 +9,9 @@ export const SORT_CONSTANTS = {
     { label: 'Oldest', value: 'date-asc' },
   ] as const satisfies readonly SortOption[],
 } as const;
+
+export const PRIORITY_COLORS = {
+  low: 'success',
+  mid: 'warning',
+  high: 'error',
+} as const satisfies Record<PriorityLevel, PirorityStatus>;

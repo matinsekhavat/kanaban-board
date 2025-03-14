@@ -10,3 +10,12 @@ export type SortOption = {
   label: string;
   value: string;
 };
+
+type Priority = {
+  low: 'success';
+  mid: 'warning';
+  high: 'error';
+};
+
+export type PriorityLevel = keyof Priority;
+export type PirorityStatus = Priority[PriorityLevel];
