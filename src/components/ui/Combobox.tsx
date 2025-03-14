@@ -74,10 +74,12 @@ export function ComboboxDemo({
                 <CommandItem
                   key={option.value}
                   value={option.label}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? '' : currentValue);
+                  onSelect={() => {
+                    // But set the actual value when selected
+                    const newValue = option.value === value ? '' : option.value;
+                    setValue(newValue);
                     setOpen(false);
-                    if (handleChange) handleChange(currentValue);
+                    if (handleChange) handleChange(newValue);
                   }}
                 >
                   {option.label}
