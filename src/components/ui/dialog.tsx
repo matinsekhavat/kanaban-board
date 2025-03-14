@@ -5,6 +5,11 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+type OverlayType =
+  | 'none' // No overlay
+  | 'blur' // Blurred background effect
+  | 'dim' // Darkened/semi-transparent background
+  | 'solid'; // Solid color background
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -24,14 +29,21 @@ function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.C
 
 function DialogOverlay({
   className,
+  overlay = 'blur',
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: React.ComponentProps<typeof DialogPrimitive.Overlay> & {
+  overlay?: OverlayType;
+}) {
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80',
-        className
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50',
+        className,
+        overlay === 'blur' && 'backdrop-blur-sm',
+        overlay === 'dim' && 'bg-black/80',
+        overlay === 'solid' && 'bg-black/20',
+        overlay === 'none' && 'bg-transparent'
       )}
       {...props}
     />
@@ -41,11 +53,14 @@ function DialogOverlay({
 function DialogContent({
   className,
   children,
+  overlay = 'blur',
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  overlay?: OverlayType;
+}) {
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      <DialogOverlay overlay={overlay} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
