@@ -128,7 +128,4 @@
   body {
     @apply bg-background text-foreground;
   }
-  body[data-scroll-locked='1'] {
-    @apply !px-6;
-  }
 }

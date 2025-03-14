@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="px-6">
+      <body className="!px-6">
         <ThemeProvider>
           <div className="flex h-screen flex-col overflow-hidden">{children}</div>
         </ThemeProvider>
