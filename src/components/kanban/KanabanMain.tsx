@@ -319,53 +319,59 @@ function KanbanMain() {
             <DialogDescription> List of all available projects</DialogDescription>
           </DialogHeader>
           <Separator />
-          <div>
+          <div className="flex min-h-[300px] flex-col">
             <div className="flex items-center justify-between gap-2">
               <Input placeholder="Project name" className="max-w-[200px]" />
               <Button>Add Project</Button>
             </div>
             {/* All Categories */}
-            <div className="my-4 flex flex-col gap-4">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3"
-                >
-                  {/* right side */}
-                  <div className="flex items-center gap-2">
-                    <span className="flex size-8 items-center justify-center rounded-xl bg-green-200 dark:bg-green-600">
-                      <SparklesIcons className="size-4 text-green-600" />
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{task.category}</span>
-                      <span className="text-xs text-gray-500">{task.tasks.length} tasks</span>
+            <div className="my-4 flex grow flex-col gap-4">
+              {tasks.length === 0 ? (
+                <div className="flex grow items-center justify-center gap-2">
+                  <span className="text-sm text-gray-500">No projects found</span>
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3"
+                  >
+                    {/* right side */}
+                    <div className="flex items-center gap-2">
+                      <span className="flex size-8 items-center justify-center rounded-xl bg-green-200 dark:bg-green-600">
+                        <SparklesIcons className="size-4 text-green-600" />
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{task.category}</span>
+                        <span className="text-xs text-gray-500">{task.tasks.length} tasks</span>
+                      </div>
+                    </div>
+
+                    {/* Left side */}
+                    <div className="flex items-center gap-2">
+                      {/* button edit */}
+                      <Button
+                        onClick={() => {
+                          setSelectedCategoryId(task.id);
+                          setSelectedCategoryAction('edit');
+                        }}
+                      >
+                        <EditIcon className="size-4" />
+                      </Button>
+                      {/* button Danger */}
+                      <Button
+                        className="bg-red-500/70 hover:bg-red-500/80"
+                        onClick={() => {
+                          setSelectedCategoryId(task.id);
+                          setSelectedCategoryAction('delete');
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   </div>
-
-                  {/* Left side */}
-                  <div className="flex items-center gap-2">
-                    {/* button edit */}
-                    <Button
-                      onClick={() => {
-                        setSelectedCategoryId(task.id);
-                        setSelectedCategoryAction('edit');
-                      }}
-                    >
-                      <EditIcon className="size-4" />
-                    </Button>
-                    {/* button Danger */}
-                    <Button
-                      className="bg-red-500/70 hover:bg-red-500/80"
-                      onClick={() => {
-                        setSelectedCategoryId(task.id);
-                        setSelectedCategoryAction('delete');
-                      }}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             {selectedCategoryId &&
               (selectedCategoryAction === 'edit' ? (
