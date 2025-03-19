@@ -45,6 +45,7 @@ function KanbanMain() {
   const { OPTIONS, DEFAULT_SORT } = SORT_CONSTANTS;
   const { getSearchParam, updateSearchParam } = useUpdateSearchParam();
   const [sortBy, setSortBy] = useState(() => getSearchParam('sort') || DEFAULT_SORT);
+  const [isAddCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
   const { label } = findSortOption(sortBy);
   const methods = useForm<addTaskSchemaType>({
     resolver: zodResolver(addTaskSchema),
@@ -92,7 +93,15 @@ function KanbanMain() {
               {/* HEADER > LEFT */}
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold sm:text-2xl">Projects</span>
-                <SparklesIcon className="size-4 text-yellow-500" />
+                <Button
+                  variant={'ghost'}
+                  className="size-max cursor-pointer"
+                  onClick={() => {
+                    setIsCategoryModalOpen(true);
+                  }}
+                >
+                  <SparklesIcon className="size-4 text-yellow-500" />
+                </Button>
               </div>
               {/* HEADER > RIGHT */}
               <div className="flex items-center gap-2">
@@ -145,9 +154,9 @@ function KanbanMain() {
             <CardContent></CardContent>
           </Card>
         </div>
-
-        {/* ========== Modal ========== */}
       </div>
+      {/* ========== Modal ========== */}
+      {/* ========== Add Task Modal ========== */}
       <Dialog open={isAddTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
         <DialogContent
           className="!max-h-[90vh] !w-[90%] !max-w-[750px] p-0"
@@ -263,6 +272,23 @@ function KanbanMain() {
               Add
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* ========== Add Category Modal ==========     */}
+      <Dialog open={isAddCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>All Projects</DialogTitle>
+            <DialogDescription> List of all available projects</DialogDescription>
+          </DialogHeader>
+          <Separator />
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <Input placeholder="Project name" className="max-w-[200px]" />
+              <Button>Add Project</Button>
+            </div>
+            <div></div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
