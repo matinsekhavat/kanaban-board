@@ -20,15 +20,16 @@ export interface KanbanAllTasksState {
   tasks: KanbanTaskState[];
   addTask: (task: KanbanTaskState) => void;
   removeTask: (categoryId: string, taskId: string) => void;
+  removeCategory: (categoryId: string) => void;
 }
 
 const dataMock: KanbanTaskState[] = [
   {
-    id: '1',
+    id: uuidv4(),
     category: 'muchat tasks',
     tasks: [
       {
-        id: '1',
+        id: uuidv4(),
         priority: 'low',
         title: 'task 1',
         description: 'description 1',
@@ -41,22 +42,32 @@ const dataMock: KanbanTaskState[] = [
 export const useKanbanTasks = create<KanbanAllTasksState>((set) => ({
   tasks: dataMock,
   addTask: (task: KanbanTaskState) =>
-    set((state) => ({
-      tasks: [
-        ...state.tasks,
-        {
-          id: task.id || uuidv4(),
-          category: task.category || '',
-          tasks: task.tasks.map((t) => ({
-            id: t.id || uuidv4(),
-            priority: t.priority || 'low',
-            title: t.title,
-            description: t.description,
-            status: t.status,
-          })),
-        },
-      ],
-    })),
+    set((state) => {
+      // Check if the category already exists
+      const existingCategoryIndex = state.tasks.findIndex((cat) => cat.category === task.category);
+
+      if (existingCategoryIndex >= 0) {
+        // Category exists, add tasks to it
+        const updatedTasks = [...state.tasks];
+        updatedTasks[existingCategoryIndex] = {
+          ...updatedTasks[existingCategoryIndex],
+          tasks: [
+            ...updatedTasks[existingCategoryIndex].tasks,
+            ...task.tasks.map((t) => ({
+              id: t.id || uuidv4(),
+              priority: t.priority || 'low',
+              title: t.title,
+              description: t.description,
+              status: t.status,
+            })),
+          ],
+        };
+        return { tasks: updatedTasks };
+      } else {
+        return { ...state };
+      }
+    }),
+
   removeTask: (categoryId: string, taskId: string) =>
     set((state) => {
       // Create a new array of categories with the specific task removed
@@ -76,4 +87,8 @@ export const useKanbanTasks = create<KanbanAllTasksState>((set) => ({
 
       return { tasks: cleanedCategories };
     }),
+  removeCategory: (categoryId: string) =>
+    set((state) => ({
+      tasks: state.tasks.filter((category) => category.id !== categoryId),
+    })),
 }));
