@@ -31,6 +31,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { addTaskSchema, type addTaskSchemaType } from '@/types/scehma';
 import { useKanbanTasks } from '@/stores/kanban-tasks/useKanbanTasks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { v4 as uuidv4 } from 'uuid';
+
 const findSortOption = (value: string): SortOption => {
   return (
     SORT_CONSTANTS.OPTIONS.find((option) => option.value === value) ||
@@ -72,10 +74,12 @@ function KanbanMain() {
   function onSubmit(value: unknown) {
     const { title, description, priority, project } = value as addTaskSchemaType;
     addTask({
-      id: '1',
+      id: uuidv4(),
       category: project,
-      tasks: [{ id: '1', priority, title, description, status: '1' }],
+      tasks: [{ id: uuidv4(), priority, title, description, status: '1' }],
     });
+    setIsTaskModalOpen(false);
+    methods.reset();
   }
   return (
     <>

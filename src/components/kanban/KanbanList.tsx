@@ -31,8 +31,6 @@ function KanbanList() {
   const [isTaskOptionOpen, setIsTaskOptionOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<KanbanTaskState['tasks'][0] | null>(null);
   const tasks = useKanbanTasks((state) => state.tasks);
-
-  // Check if there are any tasks
   const hasNoTasks = tasks.every((category) => category.tasks.length === 0);
 
   return (
@@ -90,7 +88,6 @@ function KanbanList() {
     </>
   );
 }
-
 function KanbanColumn({
   title,
   data,
@@ -139,6 +136,7 @@ function KanbanColumn({
                   setSelectedTask(task);
                   setIsTaskOptionOpen(true);
                 }}
+                categoryId={category.id}
               />
             ))}
           </div>
@@ -163,12 +161,20 @@ function EmptyKanbanList() {
 
 function SingleTask({
   task,
+  categoryId,
   handleOpenTaskModal,
 }: {
   task: KanbanTaskState['tasks'][0];
+  categoryId: string;
   handleOpenTaskModal: () => void;
 }) {
-  // Determine the appropriate badge based on priority
+  const removeTask = useKanbanTasks((state) => state.removeTask);
+
+  const handleDeleteTask = () => {
+    // Call removeTask with both the category ID and the task ID
+    removeTask(categoryId, task.id);
+  };
+
   const renderPriorityBadge = () => {
     switch (task.priority) {
       case 'low':
@@ -214,7 +220,7 @@ function SingleTask({
   };
 
   return (
-    <div className="rounded-md border border-gray-200 p-4">
+    <div className="mb-3 rounded-md border border-gray-200 p-4">
       <div className="flex items-center justify-between gap-2">
         {renderPriorityBadge()}
         <DropdownMenu>
@@ -225,7 +231,7 @@ function SingleTask({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleOpenTaskModal}>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Delete</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDeleteTask}>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
