@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const addTaskSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters' }),
   description: z.string().min(5, { message: 'Description must be at least 5 characters' }),
-  priority: z.enum(['low', 'medium', 'high'], {
-    message: 'Priority must be "low", "medium" or "high"',
+  priority: z.enum(['low', 'mid', 'high'], {
+    message: 'Priority must be "low", "mid" or "high"',
   }),
   project: z.string({ message: 'should be select at least one item' }),
 });
