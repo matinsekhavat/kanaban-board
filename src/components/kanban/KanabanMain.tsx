@@ -1,7 +1,14 @@
 'use client';
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { BookCheck, ChevronDownIcon, PlusIcon, Sparkles as SparklesIcon } from 'lucide-react';
+import {
+  BookCheck,
+  ChevronDownIcon,
+  EditIcon,
+  PlusIcon,
+  Sparkles as SparklesIcons,
+  Trash2,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +39,7 @@ import { addTaskSchema, type addTaskSchemaType } from '@/types/scehma';
 import { useKanbanTasks } from '@/stores/kanban-tasks/useKanbanTasks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { v4 as uuidv4 } from 'uuid';
+// import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 const findSortOption = (value: string): SortOption => {
   return (
@@ -60,6 +68,13 @@ function KanbanMain() {
   const addTask = useKanbanTasks((state) => state.addTask);
   const tasks = useKanbanTasks((state) => state.tasks);
   console.log(tasks);
+  // const selectedCategoryId = useKanbanTasks((state) => state.selectedCategoryId);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryAction, setSelectedCategoryAction] = useState<'edit' | 'delete' | null>(
+    null
+  );
+
+  const handleDeleteCategory = useKanbanTasks((state) => state.removeCategory);
 
   const handleSortOptionClick = useCallback(
     (option: SortOption) => {
@@ -74,6 +89,7 @@ function KanbanMain() {
   const [isAddTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
   function onSubmit(value: unknown) {
     const { title, description, priority, project } = value as addTaskSchemaType;
+
     addTask({
       id: uuidv4(),
       category: project,
@@ -82,6 +98,15 @@ function KanbanMain() {
     setIsTaskModalOpen(false);
     methods.reset();
   }
+
+  const confirmDeleteCategory = () => {
+    if (selectedCategoryId) {
+      handleDeleteCategory(selectedCategoryId);
+      setSelectedCategoryId(null);
+      setSelectedCategoryAction(null);
+    }
+  };
+
   return (
     <>
       <div className="my-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_350px]">
@@ -100,7 +125,7 @@ function KanbanMain() {
                     setIsCategoryModalOpen(true);
                   }}
                 >
-                  <SparklesIcon className="size-4 text-yellow-500" />
+                  <SparklesIcons className="size-4 text-yellow-500" />
                 </Button>
               </div>
               {/* HEADER > RIGHT */}
@@ -211,10 +236,10 @@ function KanbanMain() {
                       handleChange={(value) => {
                         methods.setValue('project', value);
                       }}
-                      options={[
-                        { value: '1', label: 'Project 1' },
-                        { value: '2', label: 'Project 2' },
-                      ]}
+                      options={tasks.map((task) => ({
+                        value: task.category,
+                        label: task.category,
+                      }))}
                       placeholder="Select a project"
                       className="w-full"
                     />
@@ -276,7 +301,19 @@ function KanbanMain() {
       </Dialog>
       {/* ========== Add Category Modal ==========     */}
       <Dialog open={isAddCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => {
+            e.preventDefault();
+            setIsCategoryModalOpen(false);
+            setSelectedCategoryAction(null);
+          }}
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setIsCategoryModalOpen(false);
+            setSelectedCategoryAction(null);
+          }}
+          overlay="dim"
+        >
           <DialogHeader>
             <DialogTitle>All Projects</DialogTitle>
             <DialogDescription> List of all available projects</DialogDescription>
@@ -287,7 +324,96 @@ function KanbanMain() {
               <Input placeholder="Project name" className="max-w-[200px]" />
               <Button>Add Project</Button>
             </div>
-            <div></div>
+            {/* All Categories */}
+            <div className="my-4 flex flex-col gap-4">
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3"
+                >
+                  {/* right side */}
+                  <div className="flex items-center gap-2">
+                    <span className="flex size-8 items-center justify-center rounded-xl bg-green-200 dark:bg-green-600">
+                      <SparklesIcons className="size-4 text-green-600" />
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{task.category}</span>
+                      <span className="text-xs text-gray-500">{task.tasks.length} tasks</span>
+                    </div>
+                  </div>
+
+                  {/* Left side */}
+                  <div className="flex items-center gap-2">
+                    {/* button edit */}
+                    <Button
+                      onClick={() => {
+                        setSelectedCategoryId(task.id);
+                        setSelectedCategoryAction('edit');
+                      }}
+                    >
+                      <EditIcon className="size-4" />
+                    </Button>
+                    {/* button Danger */}
+                    <Button
+                      className="bg-red-500/70 hover:bg-red-500/80"
+                      onClick={() => {
+                        setSelectedCategoryId(task.id);
+                        setSelectedCategoryAction('delete');
+                      }}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {selectedCategoryId &&
+              (selectedCategoryAction === 'edit' ? (
+                <Dialog
+                  open={!!selectedCategoryId}
+                  onOpenChange={() => setSelectedCategoryId(null)}
+                >
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Project</DialogTitle>
+                      <DialogDescription>
+                        Edit the name of the project to update it
+                      </DialogDescription>
+                    </DialogHeader>
+                  </DialogContent>
+                </Dialog>
+              ) : selectedCategoryAction === 'delete' ? (
+                <Dialog
+                  open={!!selectedCategoryId}
+                  onOpenChange={() => {
+                    setSelectedCategoryId(null);
+                    setSelectedCategoryAction(null);
+                  }}
+                >
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Delete Project</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete this project? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedCategoryId(null);
+                          setSelectedCategoryAction(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button variant="destructive" onClick={confirmDeleteCategory}>
+                        Delete
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              ) : null)}
           </div>
         </DialogContent>
       </Dialog>
