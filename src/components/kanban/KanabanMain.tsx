@@ -39,6 +39,7 @@ import { addTaskSchema, type addTaskSchemaType } from '@/types/scehma';
 import { useKanbanTasks } from '@/stores/kanban-tasks/useKanbanTasks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 // import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 const findSortOption = (value: string): SortOption => {
@@ -75,6 +76,7 @@ function KanbanMain() {
   );
 
   const handleDeleteCategory = useKanbanTasks((state) => state.removeCategory);
+  const addCategory = useKanbanTasks((state) => state.addCategory);
 
   const handleSortOptionClick = useCallback(
     (option: SortOption) => {
@@ -87,6 +89,16 @@ function KanbanMain() {
     [sortBy, setSortBy, updateSearchParam]
   );
   const [isAddTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState<boolean>(false);
+  const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState<boolean>(false);
+
+  const categoryMethods = useForm<{ title: string }>({
+    resolver: zodResolver(z.object({ title: z.string().min(1, 'Title is required') })),
+    defaultValues: {
+      title: '',
+    },
+  });
+
   function onSubmit(value: unknown) {
     const { title, description, priority, project } = value as addTaskSchemaType;
 
@@ -105,6 +117,13 @@ function KanbanMain() {
       setSelectedCategoryId(null);
       setSelectedCategoryAction(null);
     }
+  };
+
+  const handleAddCategory = (value: unknown) => {
+    const { title } = value as addTaskSchemaType;
+    addCategory(title);
+    setIsCreateCategoryModalOpen(false);
+    categoryMethods.reset();
   };
 
   return (
@@ -322,7 +341,7 @@ function KanbanMain() {
           <div className="flex min-h-[300px] flex-col">
             <div className="flex items-center justify-between gap-2">
               <Input placeholder="Project name" className="max-w-[200px]" />
-              <Button>Add Project</Button>
+              <Button onClick={() => setIsCreateCategoryModalOpen(true)}>Add Project</Button>
             </div>
             {/* All Categories */}
             <div className="my-4 flex grow flex-col gap-4">
@@ -354,6 +373,7 @@ function KanbanMain() {
                         onClick={() => {
                           setSelectedCategoryId(task.id);
                           setSelectedCategoryAction('edit');
+                          setIsEditCategoryModalOpen(true);
                         }}
                       >
                         <EditIcon className="size-4" />
@@ -376,7 +396,7 @@ function KanbanMain() {
             {selectedCategoryId &&
               (selectedCategoryAction === 'edit' ? (
                 <Dialog
-                  open={!!selectedCategoryId}
+                  open={isEditCategoryModalOpen}
                   onOpenChange={() => setSelectedCategoryId(null)}
                 >
                   <DialogContent>
@@ -421,6 +441,48 @@ function KanbanMain() {
                 </Dialog>
               ) : null)}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* EditCategoryModal  */}
+
+      {/* CreateCategoryModal  */}
+      <Dialog open={isCreateCategoryModalOpen} onOpenChange={setIsCreateCategoryModalOpen}>
+        <DialogContent className="!max-h-[90vh] !w-[90%] !max-w-[750px] p-0">
+          <DialogHeader className="p-4">
+            <DialogTitle>Create Project</DialogTitle>
+          </DialogHeader>
+          <Separator />
+          <div className="px-4">
+            <Form {...categoryMethods}>
+              <form onSubmit={categoryMethods.handleSubmit(handleAddCategory)}>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={categoryMethods.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Project name" {...field} />
+                        </FormControl>
+                        <FormMessage className="mt-2 text-red-700" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </form>
+            </Form>
+          </div>
+          <Separator />
+          <DialogFooter className="p-4">
+            <Button variant="outline" onClick={() => setIsCreateCategoryModalOpen(false)}>
+              Close
+            </Button>
+            <Button type="submit" onClick={categoryMethods.handleSubmit(handleAddCategory)}>
+              Add New Project
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

@@ -21,6 +21,7 @@ export interface KanbanAllTasksState {
   addTask: (task: KanbanTaskState) => void;
   removeTask: (categoryId: string, taskId: string) => void;
   removeCategory: (categoryId: string) => void;
+  addCategory: (categoryTitle: string) => void;
 }
 
 const dataMock: KanbanTaskState[] = [
@@ -90,5 +91,16 @@ export const useKanbanTasks = create<KanbanAllTasksState>((set) => ({
   removeCategory: (categoryId: string) =>
     set((state) => ({
       tasks: state.tasks.filter((category) => category.id !== categoryId),
+    })),
+  addCategory: (categoryTitle: string) =>
+    set((state) => ({
+      tasks: [
+        ...state.tasks,
+        {
+          id: uuidv4(),
+          category: categoryTitle,
+          tasks: [],
+        },
+      ],
     })),
 }));
