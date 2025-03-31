@@ -18,6 +18,8 @@ export interface KanbanTaskState {
 
 export interface KanbanAllTasksState {
   tasks: KanbanTaskState[];
+  selectedCategoryId: string | null;
+  setSelectedCategoryId: (categoryId: string | null) => void;
   addTask: (task: KanbanTaskState) => void;
   removeTask: (categoryId: string, taskId: string) => void;
   removeCategory: (categoryId: string) => void;
@@ -25,23 +27,26 @@ export interface KanbanAllTasksState {
 }
 
 const dataMock: KanbanTaskState[] = [
-  {
-    id: uuidv4(),
-    category: 'muchat tasks',
-    tasks: [
-      {
-        id: uuidv4(),
-        priority: 'low',
-        title: 'task 1',
-        description: 'description 1',
-        status: '1',
-      },
-    ],
-  },
+  // {
+  //   id: uuidv4(),
+  //   category: 'muchat tasks',
+  //   tasks: [
+  //     {
+  //       id: uuidv4(),
+  //       priority: 'low',
+  //       title: 'task 1',
+  //       description: 'description 1',
+  //       status: '1',
+  //     },
+  //   ],
+  // },
 ];
 
 export const useKanbanTasks = create<KanbanAllTasksState>((set) => ({
   tasks: dataMock,
+  selectedCategoryId: null,
+  setSelectedCategoryId: (categoryId: string | null) => set({ selectedCategoryId: categoryId }),
+
   addTask: (task: KanbanTaskState) =>
     set((state) => {
       // Check if the category already exists
@@ -88,19 +93,29 @@ export const useKanbanTasks = create<KanbanAllTasksState>((set) => ({
 
       return { tasks: cleanedCategories };
     }),
+
   removeCategory: (categoryId: string) =>
     set((state) => ({
       tasks: state.tasks.filter((category) => category.id !== categoryId),
     })),
-  addCategory: (categoryTitle: string) =>
-    set((state) => ({
-      tasks: [
-        ...state.tasks,
-        {
-          id: uuidv4(),
-          category: categoryTitle,
-          tasks: [],
-        },
-      ],
-    })),
+
+  addCategory: (categoryTitle: string) => {
+    const id = uuidv4();
+    set((state) => {
+      if (!state.tasks.length) {
+        state.setSelectedCategoryId(id);
+      }
+
+      return {
+        tasks: [
+          ...state.tasks,
+          {
+            id,
+            category: categoryTitle,
+            tasks: [],
+          },
+        ],
+      };
+    });
+  },
 }));

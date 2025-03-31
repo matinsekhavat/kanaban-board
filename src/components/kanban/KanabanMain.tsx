@@ -8,6 +8,7 @@ import {
   PlusIcon,
   Sparkles as SparklesIcons,
   Trash2,
+  CheckCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -68,6 +69,8 @@ function KanbanMain() {
 
   const addTask = useKanbanTasks((state) => state.addTask);
   const tasks = useKanbanTasks((state) => state.tasks);
+  const mainCategory = useKanbanTasks((tasks) => tasks.selectedCategoryId);
+  const setMainCategory = useKanbanTasks((tasks) => tasks.setSelectedCategoryId);
   console.log(tasks);
   // const selectedCategoryId = useKanbanTasks((state) => state.selectedCategoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -353,13 +356,22 @@ function KanbanMain() {
                 tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3"
+                    className={cn(
+                      'flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3',
+                      {
+                        'font-bold': mainCategory === task.id,
+                      }
+                    )}
+                    onClick={() => {
+                      setMainCategory(task.id);
+                    }}
                   >
                     {/* right side */}
                     <div className="flex items-center gap-2">
                       <span className="flex size-8 items-center justify-center rounded-xl bg-green-200 dark:bg-green-600">
                         <SparklesIcons className="size-4 text-green-600" />
                       </span>
+
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{task.category}</span>
                         <span className="text-xs text-gray-500">{task.tasks.length} tasks</span>
@@ -369,8 +381,14 @@ function KanbanMain() {
                     {/* Left side */}
                     <div className="flex items-center gap-2">
                       {/* button edit */}
+                      {mainCategory === task.id && (
+                        <span>
+                          <CheckCircle className="text-green-500" />
+                        </span>
+                      )}
                       <Button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedCategoryId(task.id);
                           setSelectedCategoryAction('edit');
                           setIsEditCategoryModalOpen(true);
@@ -381,7 +399,8 @@ function KanbanMain() {
                       {/* button Danger */}
                       <Button
                         className="bg-red-500/70 hover:bg-red-500/80"
-                        onClick={() => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+                          e.stopPropagation();
                           setSelectedCategoryId(task.id);
                           setSelectedCategoryAction('delete');
                         }}

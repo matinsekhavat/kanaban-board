@@ -30,8 +30,10 @@ function filterTasksByPriority(
 function KanbanList() {
   const [isTaskOptionOpen, setIsTaskOptionOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<KanbanTaskState['tasks'][0] | null>(null);
-  const tasks = useKanbanTasks((state) => state.tasks);
-  const hasNoTasks = tasks.every((category) => category.tasks.length === 0);
+  const allTasks = useKanbanTasks((state) => state.tasks);
+  const selectedCategory = useKanbanTasks((state) => state.selectedCategoryId);
+  const relatedTasks = allTasks.filter((item) => item.id === selectedCategory);
+  const hasNoTasks = relatedTasks.every((category) => category.tasks.length === 0);
 
   return (
     <>
@@ -42,7 +44,7 @@ function KanbanList() {
           {/* Low Priority Column */}
           <KanbanColumn
             title="Low Priority"
-            data={filterTasksByPriority(tasks, 'low')}
+            data={filterTasksByPriority(relatedTasks, 'low')}
             setIsTaskOptionOpen={setIsTaskOptionOpen}
             setSelectedTask={setSelectedTask}
           />
@@ -50,7 +52,7 @@ function KanbanList() {
           {/* Medium Priority Column */}
           <KanbanColumn
             title="Medium Priority"
-            data={filterTasksByPriority(tasks, 'mid')}
+            data={filterTasksByPriority(relatedTasks, 'mid')}
             setIsTaskOptionOpen={setIsTaskOptionOpen}
             setSelectedTask={setSelectedTask}
           />
@@ -58,7 +60,7 @@ function KanbanList() {
           {/* High Priority Column */}
           <KanbanColumn
             title="High Priority"
-            data={filterTasksByPriority(tasks, 'high')}
+            data={filterTasksByPriority(relatedTasks, 'high')}
             setIsTaskOptionOpen={setIsTaskOptionOpen}
             setSelectedTask={setSelectedTask}
           />
@@ -101,7 +103,7 @@ function KanbanColumn({
 }) {
   // Count total tasks across all categories in this column
   const totalTasks = data.reduce((count, category) => count + category.tasks.length, 0);
-
+  console.log(data);
   if (data.length === 0) {
     return (
       <div className="min-h-64 space-y-4 rounded-xl border border-zinc-200 p-4 shadow-sm">
