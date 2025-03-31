@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   BookCheck,
@@ -8,6 +8,7 @@ import {
   PlusIcon,
   Sparkles as SparklesIcons,
   Trash2,
+  CheckCircle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -39,6 +40,7 @@ import { addTaskSchema, type addTaskSchemaType } from '@/types/scehma';
 import { useKanbanTasks } from '@/stores/kanban-tasks/useKanbanTasks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 // import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 const findSortOption = (value: string): SortOption => {
@@ -67,7 +69,14 @@ function KanbanMain() {
 
   const addTask = useKanbanTasks((state) => state.addTask);
   const tasks = useKanbanTasks((state) => state.tasks);
-  console.log(tasks);
+  const mainCategory = useKanbanTasks((tasks) => tasks.selectedCategoryId);
+  const setMainCategory = useKanbanTasks((tasks) => tasks.setSelectedCategoryId);
+  const setEditCategory = useKanbanTasks((state) => state.editCategory);
+  const [filterCategory, setFilterCategory] = useState<string>('');
+  const filterCategoryList = filterCategory.length
+    ? tasks.filter((item) => item.category.includes(filterCategory))
+    : tasks;
+
   // const selectedCategoryId = useKanbanTasks((state) => state.selectedCategoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCategoryAction, setSelectedCategoryAction] = useState<'edit' | 'delete' | null>(
@@ -75,6 +84,7 @@ function KanbanMain() {
   );
 
   const handleDeleteCategory = useKanbanTasks((state) => state.removeCategory);
+  const addCategory = useKanbanTasks((state) => state.addCategory);
 
   const handleSortOptionClick = useCallback(
     (option: SortOption) => {
@@ -87,6 +97,33 @@ function KanbanMain() {
     [sortBy, setSortBy, updateSearchParam]
   );
   const [isAddTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState<boolean>(false);
+  const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState<boolean>(false);
+
+  const categoryMethods = useForm<{ title: string }>({
+    resolver: zodResolver(z.object({ title: z.string().min(1, 'Title is required') })),
+    defaultValues: {
+      title: '',
+    },
+  });
+
+  const editCategoryMethods = useForm<{ title: string }>({
+    resolver: zodResolver(z.object({ title: z.string().min(1, 'Title is required') })),
+    defaultValues: {
+      title: '',
+    },
+  });
+
+  // Set default value for edit form when a category is selected
+  useEffect(() => {
+    if (selectedCategoryId && selectedCategoryAction === 'edit') {
+      const selectedCategory = tasks.find((task) => task.id === selectedCategoryId);
+      if (selectedCategory) {
+        editCategoryMethods.setValue('title', selectedCategory.category);
+      }
+    }
+  }, [selectedCategoryId, selectedCategoryAction, tasks, editCategoryMethods]);
+
   function onSubmit(value: unknown) {
     const { title, description, priority, project } = value as addTaskSchemaType;
 
@@ -105,6 +142,26 @@ function KanbanMain() {
       setSelectedCategoryId(null);
       setSelectedCategoryAction(null);
     }
+  };
+
+  const handleAddCategory = (value: unknown) => {
+    const { title } = value as { title: string };
+    addCategory(title);
+    setIsCreateCategoryModalOpen(false);
+    categoryMethods.reset();
+  };
+
+  const handleEditCategory = (value: unknown) => {
+    const { title } = value as { title: string };
+    // You would need to implement a updateCategory function in your store
+    // For now, we'll just close the modal
+    console.log(`Category ${selectedCategoryId} updated with title: ${title}`);
+    if (!selectedCategoryId) return;
+    setEditCategory(title, selectedCategoryId);
+    setIsEditCategoryModalOpen(false);
+    setSelectedCategoryId(null);
+    setSelectedCategoryAction(null);
+    editCategoryMethods.reset();
   };
 
   return (
@@ -321,8 +378,15 @@ function KanbanMain() {
           <Separator />
           <div className="flex min-h-[300px] flex-col">
             <div className="flex items-center justify-between gap-2">
-              <Input placeholder="Project name" className="max-w-[200px]" />
-              <Button>Add Project</Button>
+              <Input
+                value={filterCategory}
+                placeholder="Project name"
+                className="max-w-[200px]"
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                }}
+              />
+              <Button onClick={() => setIsCreateCategoryModalOpen(true)}>Add Project</Button>
             </div>
             {/* All Categories */}
             <div className="my-4 flex grow flex-col gap-4">
@@ -331,16 +395,25 @@ function KanbanMain() {
                   <span className="text-sm text-gray-500">No projects found</span>
                 </div>
               ) : (
-                tasks.map((task) => (
+                filterCategoryList.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3"
+                    className={cn(
+                      'flex items-center justify-between gap-4 rounded-md border border-gray-300 p-3',
+                      {
+                        'font-bold': mainCategory === task.id,
+                      }
+                    )}
+                    onClick={() => {
+                      setMainCategory(task.id);
+                    }}
                   >
                     {/* right side */}
                     <div className="flex items-center gap-2">
                       <span className="flex size-8 items-center justify-center rounded-xl bg-green-200 dark:bg-green-600">
                         <SparklesIcons className="size-4 text-green-600" />
                       </span>
+
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{task.category}</span>
                         <span className="text-xs text-gray-500">{task.tasks.length} tasks</span>
@@ -350,10 +423,17 @@ function KanbanMain() {
                     {/* Left side */}
                     <div className="flex items-center gap-2">
                       {/* button edit */}
+                      {mainCategory === task.id && (
+                        <span>
+                          <CheckCircle className="text-green-500" />
+                        </span>
+                      )}
                       <Button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedCategoryId(task.id);
                           setSelectedCategoryAction('edit');
+                          setIsEditCategoryModalOpen(true);
                         }}
                       >
                         <EditIcon className="size-4" />
@@ -361,7 +441,8 @@ function KanbanMain() {
                       {/* button Danger */}
                       <Button
                         className="bg-red-500/70 hover:bg-red-500/80"
-                        onClick={() => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+                          e.stopPropagation();
                           setSelectedCategoryId(task.id);
                           setSelectedCategoryAction('delete');
                         }}
@@ -373,54 +454,136 @@ function KanbanMain() {
                 ))
               )}
             </div>
-            {selectedCategoryId &&
-              (selectedCategoryAction === 'edit' ? (
-                <Dialog
-                  open={!!selectedCategoryId}
-                  onOpenChange={() => setSelectedCategoryId(null)}
-                >
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Project</DialogTitle>
-                      <DialogDescription>
-                        Edit the name of the project to update it
-                      </DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              ) : selectedCategoryAction === 'delete' ? (
-                <Dialog
-                  open={!!selectedCategoryId}
-                  onOpenChange={() => {
-                    setSelectedCategoryId(null);
-                    setSelectedCategoryAction(null);
-                  }}
-                >
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Delete Project</DialogTitle>
-                      <DialogDescription>
-                        Are you sure you want to delete this project? This action cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedCategoryId(null);
-                          setSelectedCategoryAction(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button variant="destructive" onClick={confirmDeleteCategory}>
-                        Delete
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : null)}
+            {selectedCategoryAction === 'delete' && (
+              <Dialog
+                open={!!selectedCategoryId}
+                onOpenChange={() => {
+                  setSelectedCategoryId(null);
+                  setSelectedCategoryAction(null);
+                }}
+              >
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Delete Project</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete this project? This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="gap-2 sm:justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedCategoryId(null);
+                        setSelectedCategoryAction(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeleteCategory}>
+                      Delete
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* EditCategoryModal  */}
+      <Dialog
+        open={isEditCategoryModalOpen}
+        onOpenChange={(open) => {
+          setIsEditCategoryModalOpen(open);
+          if (!open) {
+            setSelectedCategoryId(null);
+            setSelectedCategoryAction(null);
+          }
+        }}
+      >
+        <DialogContent className="!max-h-[90vh] !w-[90%] !max-w-[750px] p-0">
+          <DialogHeader className="p-4">
+            <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>Edit the name of the project to update it</DialogDescription>
+          </DialogHeader>
+          <Separator />
+          <div className="px-4">
+            <Form {...editCategoryMethods}>
+              <form onSubmit={editCategoryMethods.handleSubmit(handleEditCategory)}>
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={editCategoryMethods.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Project name" {...field} />
+                        </FormControl>
+                        <FormMessage className="mt-2 text-red-700" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </form>
+            </Form>
+          </div>
+          <Separator />
+          <DialogFooter className="p-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditCategoryModalOpen(false);
+                setSelectedCategoryId(null);
+                setSelectedCategoryAction(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" onClick={editCategoryMethods.handleSubmit(handleEditCategory)}>
+              Update Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* CreateCategoryModal  */}
+      <Dialog open={isCreateCategoryModalOpen} onOpenChange={setIsCreateCategoryModalOpen}>
+        <DialogContent className="!max-h-[90vh] !w-[90%] !max-w-[750px] p-0">
+          <DialogHeader className="p-4">
+            <DialogTitle>Create Project</DialogTitle>
+          </DialogHeader>
+          <Separator />
+          <div className="px-4">
+            <Form {...categoryMethods}>
+              <form onSubmit={categoryMethods.handleSubmit(handleAddCategory)}>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={categoryMethods.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Project name" {...field} />
+                        </FormControl>
+                        <FormMessage className="mt-2 text-red-700" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </form>
+            </Form>
+          </div>
+          <Separator />
+          <DialogFooter className="p-4">
+            <Button variant="outline" onClick={() => setIsCreateCategoryModalOpen(false)}>
+              Close
+            </Button>
+            <Button type="submit" onClick={categoryMethods.handleSubmit(handleAddCategory)}>
+              Add New Project
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
