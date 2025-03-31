@@ -72,7 +72,11 @@ function KanbanMain() {
   const mainCategory = useKanbanTasks((tasks) => tasks.selectedCategoryId);
   const setMainCategory = useKanbanTasks((tasks) => tasks.setSelectedCategoryId);
   const setEditCategory = useKanbanTasks((state) => state.editCategory);
-  console.log(tasks);
+  const [filterCategory, setFilterCategory] = useState<string>('');
+  const filterCategoryList = filterCategory.length
+    ? tasks.filter((item) => item.category.includes(filterCategory))
+    : tasks;
+
   // const selectedCategoryId = useKanbanTasks((state) => state.selectedCategoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCategoryAction, setSelectedCategoryAction] = useState<'edit' | 'delete' | null>(
@@ -374,7 +378,14 @@ function KanbanMain() {
           <Separator />
           <div className="flex min-h-[300px] flex-col">
             <div className="flex items-center justify-between gap-2">
-              <Input placeholder="Project name" className="max-w-[200px]" />
+              <Input
+                value={filterCategory}
+                placeholder="Project name"
+                className="max-w-[200px]"
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                }}
+              />
               <Button onClick={() => setIsCreateCategoryModalOpen(true)}>Add Project</Button>
             </div>
             {/* All Categories */}
@@ -384,7 +395,7 @@ function KanbanMain() {
                   <span className="text-sm text-gray-500">No projects found</span>
                 </div>
               ) : (
-                tasks.map((task) => (
+                filterCategoryList.map((task) => (
                   <div
                     key={task.id}
                     className={cn(
