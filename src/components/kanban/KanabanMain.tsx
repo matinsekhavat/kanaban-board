@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   BookCheck,
@@ -71,6 +71,7 @@ function KanbanMain() {
   const tasks = useKanbanTasks((state) => state.tasks);
   const mainCategory = useKanbanTasks((tasks) => tasks.selectedCategoryId);
   const setMainCategory = useKanbanTasks((tasks) => tasks.setSelectedCategoryId);
+  const setEditCategory = useKanbanTasks((state) => state.editCategory);
   console.log(tasks);
   // const selectedCategoryId = useKanbanTasks((state) => state.selectedCategoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -102,6 +103,23 @@ function KanbanMain() {
     },
   });
 
+  const editCategoryMethods = useForm<{ title: string }>({
+    resolver: zodResolver(z.object({ title: z.string().min(1, 'Title is required') })),
+    defaultValues: {
+      title: '',
+    },
+  });
+
+  // Set default value for edit form when a category is selected
+  useEffect(() => {
+    if (selectedCategoryId && selectedCategoryAction === 'edit') {
+      const selectedCategory = tasks.find((task) => task.id === selectedCategoryId);
+      if (selectedCategory) {
+        editCategoryMethods.setValue('title', selectedCategory.category);
+      }
+    }
+  }, [selectedCategoryId, selectedCategoryAction, tasks, editCategoryMethods]);
+
   function onSubmit(value: unknown) {
     const { title, description, priority, project } = value as addTaskSchemaType;
 
@@ -123,10 +141,23 @@ function KanbanMain() {
   };
 
   const handleAddCategory = (value: unknown) => {
-    const { title } = value as addTaskSchemaType;
+    const { title } = value as { title: string };
     addCategory(title);
     setIsCreateCategoryModalOpen(false);
     categoryMethods.reset();
+  };
+
+  const handleEditCategory = (value: unknown) => {
+    const { title } = value as { title: string };
+    // You would need to implement a updateCategory function in your store
+    // For now, we'll just close the modal
+    console.log(`Category ${selectedCategoryId} updated with title: ${title}`);
+    if (!selectedCategoryId) return;
+    setEditCategory(title, selectedCategoryId);
+    setIsEditCategoryModalOpen(false);
+    setSelectedCategoryId(null);
+    setSelectedCategoryAction(null);
+    editCategoryMethods.reset();
   };
 
   return (
@@ -412,58 +443,98 @@ function KanbanMain() {
                 ))
               )}
             </div>
-            {selectedCategoryId &&
-              (selectedCategoryAction === 'edit' ? (
-                <Dialog
-                  open={isEditCategoryModalOpen}
-                  onOpenChange={() => setSelectedCategoryId(null)}
-                >
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Project</DialogTitle>
-                      <DialogDescription>
-                        Edit the name of the project to update it
-                      </DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              ) : selectedCategoryAction === 'delete' ? (
-                <Dialog
-                  open={!!selectedCategoryId}
-                  onOpenChange={() => {
-                    setSelectedCategoryId(null);
-                    setSelectedCategoryAction(null);
-                  }}
-                >
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Delete Project</DialogTitle>
-                      <DialogDescription>
-                        Are you sure you want to delete this project? This action cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedCategoryId(null);
-                          setSelectedCategoryAction(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button variant="destructive" onClick={confirmDeleteCategory}>
-                        Delete
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : null)}
+            {selectedCategoryAction === 'delete' && (
+              <Dialog
+                open={!!selectedCategoryId}
+                onOpenChange={() => {
+                  setSelectedCategoryId(null);
+                  setSelectedCategoryAction(null);
+                }}
+              >
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Delete Project</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete this project? This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="gap-2 sm:justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedCategoryId(null);
+                        setSelectedCategoryAction(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeleteCategory}>
+                      Delete
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
       {/* EditCategoryModal  */}
+      <Dialog
+        open={isEditCategoryModalOpen}
+        onOpenChange={(open) => {
+          setIsEditCategoryModalOpen(open);
+          if (!open) {
+            setSelectedCategoryId(null);
+            setSelectedCategoryAction(null);
+          }
+        }}
+      >
+        <DialogContent className="!max-h-[90vh] !w-[90%] !max-w-[750px] p-0">
+          <DialogHeader className="p-4">
+            <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>Edit the name of the project to update it</DialogDescription>
+          </DialogHeader>
+          <Separator />
+          <div className="px-4">
+            <Form {...editCategoryMethods}>
+              <form onSubmit={editCategoryMethods.handleSubmit(handleEditCategory)}>
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={editCategoryMethods.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Project name" {...field} />
+                        </FormControl>
+                        <FormMessage className="mt-2 text-red-700" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </form>
+            </Form>
+          </div>
+          <Separator />
+          <DialogFooter className="p-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditCategoryModalOpen(false);
+                setSelectedCategoryId(null);
+                setSelectedCategoryAction(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" onClick={editCategoryMethods.handleSubmit(handleEditCategory)}>
+              Update Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* CreateCategoryModal  */}
       <Dialog open={isCreateCategoryModalOpen} onOpenChange={setIsCreateCategoryModalOpen}>
